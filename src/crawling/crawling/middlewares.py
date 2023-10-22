@@ -105,20 +105,10 @@ class CrawlingDownloaderMiddleware:
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s" % spider.name)
 
-# def renew_tor_ip():
-#     with Controller.from_port(port=9051) as controller:
-#         controller.authenticate()
-#         controller.signal(Signal.NEWNYM)
-
-# class TorRenewalMiddleware:
-#     def __init__(self):
-#         self.request_count = 0
-
-#     def process_request(self, request, spider):
-#         self.request_count += 1
-#         if self.request_count % 100 == 0:
-#             renew_tor_ip()
-#             spider.logger.info("Tor IP renewed after 100 requests.")
+def renew_tor_ip():
+    with Controller.from_port(port=9051) as controller:
+        controller.authenticate()
+        controller.signal(Signal.NEWNYM)
 
 class RandomUserAgentMiddleware:
     def __init__(self):
@@ -126,3 +116,11 @@ class RandomUserAgentMiddleware:
 
     def process_request(self, request, spider):
         request.headers['User-Agent'] = self.ua.random
+    
+    def process_response(self, request, response, spider):
+        if response.status == 302 and "/crawlprevention/" in response.url:
+            spider.logger.info("Encountered 302 redirect to /crawlprevention/. Changing IP...")
+            renew_tor_ip()
+            # Повторный запрос к тому же URL после смены IP
+            return request.replace(dont_filter=True)
+        return response
