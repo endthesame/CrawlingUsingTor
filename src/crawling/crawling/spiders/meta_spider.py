@@ -1,7 +1,7 @@
 import scrapy
 import os, json
 
-with open('../../../../config.json', 'r') as config_file:
+with open('../../../config.json', 'r') as config_file:
     config = json.load(config_file)
 
 SITES_TO_CRAWL = config["sites_to_crawl"]
@@ -13,7 +13,7 @@ class MetaSpider(scrapy.Spider):
 
     def start_requests(self):
         # Считываем сайты из файла
-        with open(SITES_TO_CRAWL, 'r') as file:
+        with open('../../../assets/sites_to_crawl/sites.txt', 'r') as file:
             sites = [line.strip() for line in file if line.strip()]
         
         for site in sites:

@@ -15,9 +15,11 @@ NEWSPIDER_MODULE = "crawling.spiders"
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "crawling (+http://www.yourdomain.com)"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
+DOWNLOAD_DELAY = 2
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -118,7 +120,7 @@ PROXY = {
 }
 
 FEEDS = {
-    'meta_results.json': {
+    '../../../assets/output/oxford/meta_results.json': {
         'format': 'jsonlines',
         'store_empty': False,
         'encoding': 'utf8',
