@@ -11,7 +11,13 @@ class MetaSpider(scrapy.Spider):
         super(MetaSpider, self).__init__(*args, **kwargs)
         self.category = category
 
+    def print_ip(self, response):
+        # Извлечь и распечатать ваш текущий IP из ответа
+        ip_info = response.json()
+        self.logger.info(f"Current IP: {ip_info['origin']}")
+
     def start_requests(self):
+        yield scrapy.Request(url="https://httpbin.org/ip", callback=self.print_ip, dont_filter=True)
         # Считываем сайты из файла
         with open('../../../assets/sites_to_crawl/sites.txt', 'r') as file:
             sites = [line.strip() for line in file if line.strip()]
