@@ -7,6 +7,7 @@ from scrapy import signals
 from stem import Signal
 from stem.control import Controller
 from fake_useragent import UserAgent
+import time
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
@@ -107,6 +108,7 @@ class CrawlingDownloaderMiddleware:
 
 def renew_tor_ip():
     with Controller.from_port(port=9051) as controller:
+        time.sleep(2)
         controller.authenticate()
         controller.signal(Signal.NEWNYM)
 
@@ -119,7 +121,7 @@ class RandomUserAgentMiddleware:
     
     def process_response(self, request, response, spider):
         spider.logger.info(f"Processing response with status: {response.status} and URL: {response.url}")
-        if response.status == 302 or "/crawlprevention/" in response.url:
+        if response.status == 302 or "crawlprevention" in response.url:
             spider.logger.info("Encountered 302 redirect to /crawlprevention/. Changing IP...")
             renew_tor_ip()
             # Повторный запрос к тому же URL после смены IP
