@@ -9,4 +9,5 @@ import scrapy
 class CrawlingItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    pass
+    metafields = scrapy.Field()
+    path = scrapy.Field()    

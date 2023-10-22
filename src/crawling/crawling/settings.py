@@ -114,17 +114,23 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 1,
 }
 
+ITEM_PIPELINES = {
+    'crawling.pipelines.JsonFeedPipeline': 1,
+}
+
 # Настройки для прокси
 PROXY = {
     'http': HTTP_PROXY,
     'https': HTTPS_PROXY
 }
 
-FEEDS = {
-    '../../../assets/output/oxford/meta_results.json': {
-        'format': 'jsonlines',
-        'store_empty': False,
-        'encoding': 'utf8',
-        'indent': 4,
-    },
-}
+#FEED_FILE_NAME = "../../../assets/output/oxford/oxford.json"
+
+# FEEDS = {
+#     '../../../assets/output/oxford/meta_results.json': {
+#         'format': 'jsonlines',
+#         'store_empty': False,
+#         'encoding': 'utf8',
+#         'indent': 4,
+#     },
+# }
