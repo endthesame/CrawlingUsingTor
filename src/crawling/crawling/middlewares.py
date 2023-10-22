@@ -118,7 +118,8 @@ class RandomUserAgentMiddleware:
         request.headers['User-Agent'] = self.ua.random
     
     def process_response(self, request, response, spider):
-        if response.status == 302 and "/crawlprevention/" in response.url:
+        spider.logger.info(f"Processing response with status: {response.status} and URL: {response.url}")
+        if response.status == 302 or "/crawlprevention/" in response.url:
             spider.logger.info("Encountered 302 redirect to /crawlprevention/. Changing IP...")
             renew_tor_ip()
             # Повторный запрос к тому же URL после смены IP
