@@ -1,0 +1,5 @@
+{
+    "sites_to_crawl": "assets/sites_to_crawl/sites.txt",
+    "results_folder": "assets/output/oxford",
+    "results_file": "assets/output/oxford/meta_results.json"
+}
