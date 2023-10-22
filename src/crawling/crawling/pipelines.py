@@ -8,6 +8,7 @@
 from itemadapter import ItemAdapter
 import os
 import json
+from crawling.items import PdfDownloadItem
 
 
 class CrawlingPipeline:

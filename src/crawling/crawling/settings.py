@@ -96,14 +96,6 @@ FEED_EXPORT_ENCODING = "utf-8"
 
 import json
 
-with open('../../../config.json', 'r') as config_file:
-    config = json.load(config_file)
-
-SITES_TO_CRAWL = config["sites_to_crawl"]
-RESULTS_FOLDER = config["results_folder"]
-RESULTS_FILE = config["results_file"]
-
-
 # Настройка Tor как прокси
 HTTP_PROXY = 'http://127.0.0.1:8118'
 HTTPS_PROXY = 'https://127.0.0.1:8118'
@@ -115,7 +107,7 @@ DOWNLOADER_MIDDLEWARES = {
 }
 
 ITEM_PIPELINES = {
-    'crawling.pipelines.JsonFeedPipeline': 1,
+    'crawling.pipelines.JsonFeedPipeline': 100,
 }
 
 # Настройки для прокси
