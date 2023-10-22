@@ -4,6 +4,8 @@
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+from stem import Signal
+from stem.control import Controller
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
@@ -101,3 +103,19 @@ class CrawlingDownloaderMiddleware:
 
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s" % spider.name)
+
+def renew_tor_ip():
+    with Controller.from_port(port=9051) as controller:
+        controller.authenticate()
+        controller.signal(Signal.NEWNYM)
+
+class TorRenewalMiddleware:
+    def __init__(self):
+        self.request_count = 0
+
+    def process_request(self, request, spider):
+        self.request_count += 1
+        if self.request_count % 100 == 0:
+            renew_tor_ip()
+            spider.logger.info("Tor IP renewed after 100 requests.")
+

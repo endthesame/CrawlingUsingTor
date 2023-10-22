@@ -110,7 +110,8 @@ HTTPS_PROXY = 'https://127.0.0.1:8118'
 
 # Включите прокси для Scrapy
 DOWNLOADER_MIDDLEWARES = {
-   'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 1,
+    'crawling.middlewares.TorRenewalMiddleware': 100,
+    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 1,
 }
 
 # Настройки для прокси
