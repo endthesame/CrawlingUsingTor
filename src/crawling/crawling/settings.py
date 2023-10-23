@@ -98,12 +98,13 @@ import json
 
 # Настройка Tor как прокси
 HTTP_PROXY = 'http://127.0.0.1:8118'
-HTTPS_PROXY = 'https://127.0.0.1:8118'
+HTTPS_PROXY = 'http://127.0.0.1:8118'
 
 # Включите прокси для Scrapy
 DOWNLOADER_MIDDLEWARES = {
-    'crawling.middlewares.RandomUserAgentMiddleware': 400,
-    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 1,
+    # 'crawling.middlewares.RandomUserAgentMiddleware': 400,
+    #'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 1,
+    'crawling.middlewares.ProxyMiddleware': 543,
 }
 
 ITEM_PIPELINES = {

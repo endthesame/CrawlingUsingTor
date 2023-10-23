@@ -7,11 +7,15 @@ from scrapy import signals
 from stem import Signal
 from stem.control import Controller
 from fake_useragent import UserAgent
-import time
+from scrapy.downloadermiddlewares.httpproxy import HttpProxyMiddleware
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
 
+def renew_tor_ip():
+    with Controller.from_port(port=9051) as controller:
+        controller.authenticate()
+        controller.signal(Signal.NEWNYM)
 
 class CrawlingSpiderMiddleware:
     # Not all methods need to be defined. If a method is not defined,
@@ -106,23 +110,33 @@ class CrawlingDownloaderMiddleware:
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s" % spider.name)
 
-def renew_tor_ip():
-    with Controller.from_port(port=9051) as controller:
-        controller.authenticate()
-        controller.signal(Signal.NEWNYM)
 
-class RandomUserAgentMiddleware:
-    def __init__(self):
-        self.ua = UserAgent()
-
-    def process_request(self, request, spider):
-        request.headers['User-Agent'] = self.ua.random
-    
+class ProxyMiddleware(HttpProxyMiddleware):
     def process_response(self, request, response, spider):
+        # Get a new identity depending on the response
         spider.logger.info(f"Processing response with status: {response.status} and URL: {response.url}")
         if response.status != 200:
             spider.logger.info("Encountered error, response status code != 200 . Changing IP...")
             renew_tor_ip()
-            # Повторный запрос к тому же URL после смены IP
             return request.replace(dont_filter=True)
         return response
+    def process_request(self, request, spider):
+        #renew_tor_ip() # uncomment this line if you want to change IP every time
+        request.headers['User-Agent'] = UserAgent().random
+        request.meta['proxy'] = 'http://127.0.0.1:8118'
+
+# class RandomUserAgentMiddleware:
+#     def __init__(self):
+#         self.ua = UserAgent()
+
+#     def process_request(self, request, spider):
+#         request.headers['User-Agent'] = self.ua.random
+    
+#     def process_response(self, request, response, spider):
+#         spider.logger.info(f"Processing response with status: {response.status} and URL: {response.url}")
+#         if response.status != 200:
+#             spider.logger.info("Encountered error, response status code != 200 . Changing IP...")
+#             renew_tor_ip()
+#             # Повторный запрос к тому же URL после смены IP
+#             return request.replace(dont_filter=True)
+#         return response
