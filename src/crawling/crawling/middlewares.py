@@ -8,14 +8,13 @@ from stem import Signal
 from stem.control import Controller
 from fake_useragent import UserAgent
 from scrapy.downloadermiddlewares.httpproxy import HttpProxyMiddleware
+import time, datetime
+from scrapy.exceptions import IgnoreRequest
+
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
 
-def renew_tor_ip():
-    with Controller.from_port(port=9051) as controller:
-        controller.authenticate()
-        controller.signal(Signal.NEWNYM)
 
 class CrawlingSpiderMiddleware:
     # Not all methods need to be defined. If a method is not defined,
@@ -112,14 +111,47 @@ class CrawlingDownloaderMiddleware:
 
 
 class ProxyMiddleware(HttpProxyMiddleware):
+    def __init__(self, *args, **kwargs):
+        super(ProxyMiddleware, self).__init__(*args, **kwargs)
+        self.last_ip_refresh = datetime.datetime.now()
+
+    def renew_tor_ip(self):
+        with Controller.from_port(port=9051) as controller:
+            controller.authenticate()
+            controller.signal(Signal.NEWNYM)
+
+    def renew_ip_if_needed(self, spider):
+        spider.logger.warning(f"Changing IP and retrying...")
+        now = datetime.datetime.now()
+        if (now - self.last_ip_refresh).seconds > 120:  # 120 секунд = 2 минуты
+            self.renew_tor_ip()  # ваша функция обновления IP
+            self.last_ip_refresh = now
+        else: 
+            spider.logger.warning(f"Unable to change IP because 2 minutes have not passed")
+
     def process_response(self, request, response, spider):
         # Get a new identity depending on the response
         spider.logger.info(f"Processing response with status: {response.status} and URL: {response.url}")
-        if response.status != 200:
-            spider.logger.info("Encountered error, response status code != 200 . Changing IP...")
-            renew_tor_ip()
-            return request.replace(dont_filter=True)
+        if not (response.status == 200 or (300 <= response.status < 400)) or 'crawlprevention' in response.url:
+            self.renew_ip_if_needed(spider=spider)
+            # retries = request.meta.get('retry_times', 0) + 1
+            
+            # if retries <= 3:
+            #     spider.logger.warning(f"Attempt #{retries}. Changing IP and retrying...")
+            #     for _ in range(3):  # попытайтесь сменить IP до 3 раз
+            #         try:
+            #             self.renew_tor_ip()
+            #             break
+            #         except:
+            #             time.sleep(3)
+            #     request.meta['retry_times'] = retries  # увеличиваем счетчик попыток
+            #     return request.replace(dont_filter=True)
+            # else:
+            #     spider.logger.warning(f"Gave up after {retries} attempts. Skipping URL: {request.url}")
+            #     raise IgnoreRequest(f"Failed after {retries} retries")
+            
         return response
+    
     def process_request(self, request, spider):
         #renew_tor_ip() # uncomment this line if you want to change IP every time
         request.headers['User-Agent'] = UserAgent().random
