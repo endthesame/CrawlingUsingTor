@@ -114,6 +114,7 @@ class ProxyMiddleware(HttpProxyMiddleware):
     def __init__(self, *args, **kwargs):
         super(ProxyMiddleware, self).__init__(*args, **kwargs)
         self.last_ip_refresh = datetime.datetime.now()
+        self.renew_tor_ip()
 
     def renew_tor_ip(self):
         with Controller.from_port(port=9051) as controller:
@@ -134,6 +135,8 @@ class ProxyMiddleware(HttpProxyMiddleware):
         spider.logger.info(f"Processing response with status: {response.status} and URL: {response.url}")
         if not (response.status == 200 or (300 <= response.status < 400)) or 'crawlprevention' in response.url:
             self.renew_ip_if_needed(spider=spider)
+            request.headers['User-Agent'] = UserAgent().random
+            #return request.replace(dont_filter=True)
             # retries = request.meta.get('retry_times', 0) + 1
             
             # if retries <= 3:
@@ -154,7 +157,7 @@ class ProxyMiddleware(HttpProxyMiddleware):
     
     def process_request(self, request, spider):
         #renew_tor_ip() # uncomment this line if you want to change IP every time
-        request.headers['User-Agent'] = UserAgent().random
+        #request.headers['User-Agent'] = UserAgent().random
         request.meta['proxy'] = 'http://127.0.0.1:8118'
 
 # class RandomUserAgentMiddleware:

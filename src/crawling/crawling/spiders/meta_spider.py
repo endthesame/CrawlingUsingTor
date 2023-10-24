@@ -58,6 +58,6 @@ class MetaSpider(scrapy.Spider):
         pdf_folder = os.path.join(folder, "pdfs")
         if not os.path.exists(pdf_folder):
             os.makedirs(pdf_folder)
-        
+        print("Starting download file:", filename)
         with open(os.path.join(pdf_folder, filename), 'wb') as file:
             file.write(response.body)
