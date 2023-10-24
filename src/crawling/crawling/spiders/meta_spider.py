@@ -2,6 +2,7 @@ import scrapy
 import os, json, hashlib
 
 from crawling.items import CrawlingItem, PdfDownloadItem
+from crawling.spiders.site_extractors import edp
 
 class MetaSpider(scrapy.Spider):
     name = 'meta'
@@ -30,30 +31,7 @@ class MetaSpider(scrapy.Spider):
         # Вы должны модифицировать XPath в соответствии со структурой ваших сайтов.
         item = CrawlingItem()
 
-        authors = response.css('.linked-name::text').getall()
-        authors_string = ', '.join(authors)
-
-        abstract_texts = response.css('section.abstract p::text').getall()
-        full_abstract = ' '.join(abstract_texts).strip()
-
-        keywords = response.css('.kwd-group .kwd-part::text').getall()
-        formatted_keywords = ', '.join(keywords).strip()
-
-        meta_data = {
-            'title': response.xpath('//title').get(),
-            'date': response.xpath('//*[@name="citation_publication_date"]/@content').get(),
-            'mf_doi': response.xpath('//*[@name="citation_doi"]/@content').get(),
-            'author': authors_string,
-            'mf_journal': response.xpath('//*[@name="citation_journal_title"]/@content').get(),
-            'volume_info': response.xpath('//*[@name="citation_volume"]/@content').get(),
-            'issue_info': response.xpath('//*[@name="citation_issue"]/@content').get(),
-            'mf_issn': response.xpath('//*[@name="citation_issn"]/@content').get(),
-            'mf_publisher': response.xpath('//*[@name="citation_publisher"]/@content').get(),
-            'abstract': full_abstract,
-            'keywords': formatted_keywords,
-            'mf_url': response.url
-
-        }
+        meta_data = edp.extract_meta_data(response)
         #хеширует тайтл для названия файла
         title_hash = hashlib.sha256(meta_data['title'].encode()).hexdigest()
 
@@ -62,7 +40,7 @@ class MetaSpider(scrapy.Spider):
         yield item
 
         # Поиск ссылки на PDF
-        pdf_link = response.xpath('//a[contains(@href, ".pdf")]/@href').get()
+        pdf_link = edp.extract_pdf_link(response)
         
         # Если ссылка на PDF найдена - скачиваем ее
         if pdf_link:
