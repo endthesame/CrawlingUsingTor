@@ -20,7 +20,7 @@ class JsonFeedPipeline:
     def __init__(self):
         self.items = {'docs': []}
         self.buffer = []
-        self.buffer_limit = 100  # Мы записываем данные после того, как буфер достигнет этого размера
+        self.buffer_limit = 10  # Мы записываем данные после того, как буфер достигнет этого размера
 
     def open_spider(self, spider):
         folder_path = f"../../../assets/output/{spider.category}/"

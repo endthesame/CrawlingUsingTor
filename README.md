@@ -11,6 +11,10 @@ sudo apt-get install tor
 ControlPort 9051
 CookieAuthentication 1
 ```
+предоставить доступ:
+```
+chmod +r /run/tor/control.authcookie
+```
 
 ### Установите Privoxy
 ```
