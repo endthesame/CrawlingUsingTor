@@ -11,7 +11,7 @@ def extract_meta_data(response):
     formatted_affilations = '; '.join(affiliations).strip()
 
     meta_data = {
-        'title': response.xpath('//*[@name="citation_title1"]/@content').get() or response.xpath('//title/text()').get() or f"Default title {randint()}",
+        'title': response.xpath('//*[@name="citation_title"]/@content').get() or response.xpath('//title/text()').get() or f"Default title {randint(1,100000000000)}",
         'date': response.xpath('//*[@name="citation_publication_date"]/@content').get() or "",
         'mf_doi': response.xpath('//*[@name="citation_doi"]/@content').get() or "",
         'author': authors_string,

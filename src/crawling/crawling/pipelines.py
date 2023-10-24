@@ -8,6 +8,7 @@
 from itemadapter import ItemAdapter
 import os
 import json
+import hashlib
 from crawling.items import PdfDownloadItem
 
 
@@ -18,37 +19,27 @@ class CrawlingPipeline:
 class JsonFeedPipeline:
 
     def __init__(self):
-        self.items = {'docs': []}
         self.buffer = []
-        self.buffer_limit = 10  # Мы записываем данные после того, как буфер достигнет этого размера
 
     def open_spider(self, spider):
-        folder_path = f"../../../assets/output/{spider.category}/"
-        file_name = f"{spider.category}.json"
-        self.full_path = os.path.join(folder_path, file_name)
+        pass
+
+    def process_item(self, item, spider):
+        self.buffer.append(dict(item))
+        title_hash = hashlib.sha256(item['metafields']['title'].encode()).hexdigest()
+        file_name = f"{spider.category}_{title_hash}.json"
+        folder_path = f"../../../assets/output/{spider.category}/jsons/"
+        full_path = os.path.join(folder_path, file_name)
 
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        # Если файл уже существует, читаем его содержимое
-        if os.path.exists(self.full_path):
-            with open(self.full_path, 'r') as f:
-                self.items = json.load(f)
-
-    def process_item(self, item, spider):
-        print("Item is being processed in JsonFeedPipeline!")
-        self.buffer.append(dict(item))
-
-        if len(self.buffer) >= self.buffer_limit:
-            self.items['docs'].extend(self.buffer)
-            with open(self.full_path, 'w') as f:
-                json.dump(self.items, f, indent=4)
-            self.buffer = []
+        # Теперь записываем каждый элемент в свой собственный файл, а не ждем, пока буфер будет заполнен
+        with open(full_path, 'w') as f:
+            json.dump(item['metafields'], f, indent=4)
+        self.buffer = []
 
         return item
 
     def close_spider(self, spider):
-        if self.buffer:
-            self.items['docs'].extend(self.buffer)
-            with open(self.full_path, 'w') as f:
-                json.dump(self.items, f, indent=4)
+        pass

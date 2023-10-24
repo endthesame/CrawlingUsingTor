@@ -34,8 +34,6 @@ class MetaSpider(scrapy.Spider):
         meta_data = edp.extract_meta_data(response)
         #хеширует тайтл для названия файла
         title_hash = hashlib.sha256(meta_data['title'].encode()).hexdigest()
-
-        item['path'] = f"/assets/output/{self.category}/pdfs/{self.category}_{title_hash}.pdf"
         item['metafields'] = meta_data
         yield item
 
