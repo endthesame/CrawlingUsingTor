@@ -1,5 +1,6 @@
 import scrapy
 import os, json, hashlib
+from random import randint
 
 from crawling.items import CrawlingItem, PdfDownloadItem
 from crawling.spiders.site_extractors import edp
@@ -45,7 +46,7 @@ class MetaSpider(scrapy.Spider):
             absolute_pdf_link = response.urljoin(pdf_link)
             
             pdf_folder = f"../../../assets/output/{self.category}"
-            pdf_filename = f"{self.category}_{title_hash}.pdf"
+            pdf_filename = f"{self.category}_{title_hash}_{randint(1,10000000)}.pdf"
             
             yield scrapy.Request(absolute_pdf_link, callback=self.save_pdf, meta={'folder': pdf_folder, 'filename': pdf_filename})
 
