@@ -3,7 +3,7 @@ import os, json, hashlib
 from random import randint
 
 from crawling.items import CrawlingItem, PdfDownloadItem
-from crawling.spiders.site_extractors import edp
+from crawling.spiders.site_extractors import edp, uspkhim
 
 class MetaSpider(scrapy.Spider):
     name = 'meta'
@@ -32,21 +32,22 @@ class MetaSpider(scrapy.Spider):
         # Вы должны модифицировать XPath в соответствии со структурой ваших сайтов.
         item = CrawlingItem()
 
-        meta_data = edp.extract_meta_data(response)
+        meta_data = uspkhim.extract_meta_data(response)
         #хеширует тайтл для названия файла
         title_hash = hashlib.sha256(meta_data['title'].encode()).hexdigest()
+        date_hash = title_hash = hashlib.sha256(meta_data['date'].encode()).hexdigest()
         item['metafields'] = meta_data
         yield item
 
         # Поиск ссылки на PDF
-        pdf_link = edp.extract_pdf_link(response)
+        pdf_link = uspkhim.extract_pdf_link(response)
         
         # Если ссылка на PDF найдена - скачиваем ее
         if pdf_link:
             absolute_pdf_link = response.urljoin(pdf_link)
             
             pdf_folder = f"../../../assets/output/{self.category}"
-            pdf_filename = f"{self.category}_{title_hash}_{randint(1,10000000)}.pdf"
+            pdf_filename = f"{self.category}_{title_hash}_{date_hash}.pdf"
             
             yield scrapy.Request(absolute_pdf_link, callback=self.save_pdf, meta={'folder': pdf_folder, 'filename': pdf_filename})
 

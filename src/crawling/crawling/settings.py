@@ -19,12 +19,13 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
-DOWNLOAD_DELAY = 4
+DOWNLOAD_DELAY = 2
 # CONCURRENT_REQUESTS_PER_DOMAIN = 6
 # CONCURRENT_REQUESTS_PER_IP = 6
 AUTOTHROTTLE_START_DELAY = 5
 AUTOTHROTTLE_MAX_DELAY = 60
 
+CONCURRENT_REQUESTS = 8
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
 

@@ -114,6 +114,7 @@ class ProxyMiddleware(HttpProxyMiddleware):
     def __init__(self, *args, **kwargs):
         super(ProxyMiddleware, self).__init__(*args, **kwargs)
         self.last_ip_refresh = datetime.datetime.now()
+        self.is_ip_refreshing = False
         self.renew_tor_ip()
 
     def renew_tor_ip(self):
@@ -122,36 +123,42 @@ class ProxyMiddleware(HttpProxyMiddleware):
             controller.signal(Signal.NEWNYM)
 
     def renew_ip_if_needed(self, spider):
-        spider.logger.warning(f"Changing IP and retrying...")
         now = datetime.datetime.now()
-        if (now - self.last_ip_refresh).seconds > 120:  # 120 секунд = 2 минуты
-            self.renew_tor_ip()  # ваша функция обновления IP
+        if (now - self.last_ip_refresh).seconds > 30 and not self.is_ip_refreshing:
+            spider.logger.warning(f"Changing IP and retrying...")
+            self.is_ip_refreshing = True
+            self.renew_tor_ip()
             self.last_ip_refresh = now
-        else: 
-            spider.logger.warning(f"Unable to change IP because 2 minutes have not passed")
+            self.is_ip_refreshing = False
+        elif self.is_ip_refreshing:
+            spider.logger.warning(f"IP is currently being refreshed. Waiting...")
+        else:
+            spider.logger.warning(f"Unable to change IP because 30 minute have not passed")
 
     def process_response(self, request, response, spider):
         # Get a new identity depending on the response
         spider.logger.info(f"Processing response with status: {response.status} and URL: {response.url}")
-        if not (response.status == 200 or (300 <= response.status < 400)) or 'crawlprevention' in response.url:
-            self.renew_ip_if_needed(spider=spider)
-            request.headers['User-Agent'] = UserAgent().random
-            #return request.replace(dont_filter=True)
-            # retries = request.meta.get('retry_times', 0) + 1
+        if not (response.status == 200 or (300 <= response.status < 400)) or 'waitforfullt' in response.url:
+
+            # self.renew_ip_if_needed(spider=spider)
+            # request.headers['User-Agent'] = UserAgent().random
+
+            # Узнаем, сколько раз этот запрос уже был повторен
+            retries = request.meta.get('retry_times', 0) + 1
             
-            # if retries <= 3:
-            #     spider.logger.warning(f"Attempt #{retries}. Changing IP and retrying...")
-            #     for _ in range(3):  # попытайтесь сменить IP до 3 раз
-            #         try:
-            #             self.renew_tor_ip()
-            #             break
-            #         except:
-            #             time.sleep(3)
-            #     request.meta['retry_times'] = retries  # увеличиваем счетчик попыток
-            #     return request.replace(dont_filter=True)
-            # else:
-            #     spider.logger.warning(f"Gave up after {retries} attempts. Skipping URL: {request.url}")
-            #     raise IgnoreRequest(f"Failed after {retries} retries")
+            # Если попыток было меньше 2
+            if retries <= 2:
+                spider.logger.warning(f"Attempt #{retries}. Changing IP and retrying...")
+                
+                if not self.is_ip_refreshing:
+                    self.renew_ip_if_needed(spider=spider)
+
+                request.headers['User-Agent'] = UserAgent().random
+                request.meta['retry_times'] = retries  # Обновляем счетчик попыток
+                return request.replace(dont_filter=True)  # Повторный запрос
+            else:
+                spider.logger.warning(f"Gave up after {retries} attempts. Skipping URL: {request.url}")
+                raise IgnoreRequest(f"Failed after {retries} retries")
             
         return response
     
@@ -159,19 +166,3 @@ class ProxyMiddleware(HttpProxyMiddleware):
         #renew_tor_ip() # uncomment this line if you want to change IP every time
         #request.headers['User-Agent'] = UserAgent().random
         request.meta['proxy'] = 'http://127.0.0.1:8118'
-
-# class RandomUserAgentMiddleware:
-#     def __init__(self):
-#         self.ua = UserAgent()
-
-#     def process_request(self, request, spider):
-#         request.headers['User-Agent'] = self.ua.random
-    
-#     def process_response(self, request, response, spider):
-#         spider.logger.info(f"Processing response with status: {response.status} and URL: {response.url}")
-#         if response.status != 200:
-#             spider.logger.info("Encountered error, response status code != 200 . Changing IP...")
-#             renew_tor_ip()
-#             # Повторный запрос к тому же URL после смены IP
-#             return request.replace(dont_filter=True)
-#         return response
