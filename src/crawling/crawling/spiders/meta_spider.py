@@ -1,20 +1,25 @@
 import scrapy
 import os, json, hashlib
-from random import randint
+from datetime import datetime
 
 from crawling.items import CrawlingItem, PdfDownloadItem
 from crawling.spiders.site_extractors import edp, uspkhim
+from crawling.downloader.pdf_downloader import PDFDownloader
 
 class MetaSpider(scrapy.Spider):
     name = 'meta'
+    link_buffer = []
 
     #added category where we save meta data
     def __init__(self, category='oxford', *args, **kwargs):
         super(MetaSpider, self).__init__(*args, **kwargs)
         self.category = category
+        self.pdf_links_folder = f"../../../assets/output/{self.category}/links"
+        if not os.path.exists(self.pdf_links_folder):
+            os.makedirs(self.pdf_links_folder)
+        self.file_path = os.path.join(self.pdf_links_folder,self.category + "_" + datetime.now().strftime("%Y%m%d%H%M%S") + '_pdf_links.txt')
 
     def print_ip(self, response):
-        # Извлечь и распечатать ваш текущий IP из ответа
         ip_info = response.json()
         self.logger.info(f"Current IP: {ip_info['origin']}")
 
@@ -28,36 +33,35 @@ class MetaSpider(scrapy.Spider):
             yield scrapy.Request(url=site, callback=self.parse)
 
     def parse(self, response):
-        # Извлечь метаданные. Здесь приведен пример извлечения title.
-        # Вы должны модифицировать XPath в соответствии со структурой ваших сайтов.
         item = CrawlingItem()
 
-        meta_data = uspkhim.extract_meta_data(response)
+        meta_data = uspkhim.extract_meta_data(response) #ТУТ МЕНЯЕТСЯ ЗАДАНИЕ МЕТА ДЛЯ САЙТОВ
         #хеширует тайтл для названия файла
         title_hash = hashlib.sha256(meta_data['title'].encode()).hexdigest()
-        date_hash = title_hash = hashlib.sha256(meta_data['date'].encode()).hexdigest()
+        date_hash = hashlib.sha256(meta_data['date'].encode()).hexdigest()
         item['metafields'] = meta_data
         yield item
 
         # Поиск ссылки на PDF
         pdf_link = uspkhim.extract_pdf_link(response)
         
-        # Если ссылка на PDF найдена - скачиваем ее
+        # Если ссылка на PDF найдена - добавляем ее в буфер
         if pdf_link:
             absolute_pdf_link = response.urljoin(pdf_link)
-            
-            pdf_folder = f"../../../assets/output/{self.category}"
             pdf_filename = f"{self.category}_{title_hash}_{date_hash}.pdf"
-            
-            yield scrapy.Request(absolute_pdf_link, callback=self.save_pdf, meta={'folder': pdf_folder, 'filename': pdf_filename})
+            self.link_buffer.append((absolute_pdf_link, pdf_filename))
 
-    def save_pdf(self, response):
-        folder = response.meta['folder']
-        filename = response.meta['filename']
-        
-        pdf_folder = os.path.join(folder, "pdfs")
-        if not os.path.exists(pdf_folder):
-            os.makedirs(pdf_folder)
-        print("Starting download file:", filename)
-        with open(os.path.join(pdf_folder, filename), 'wb') as file:
-            file.write(response.body)
+            if len(self.link_buffer) >= 10:
+                with open(self.file_path, 'a') as f:  # Используем режим 'a' для добавления ссылок, чтобы не перезаписать файл
+                    for link, pdf_filename in self.link_buffer:
+                        f.write(link + ' ' + pdf_filename + '\n')
+                self.link_buffer = []
+
+    def closed(self, reason):
+        # Записываем оставшиеся ссылки из буфера в файл, если они есть
+        if self.link_buffer: 
+            with open(self.file_path, 'a') as f:
+                for link, pdf_filename in self.link_buffer:
+                    f.write(link + ' ' + pdf_filename + '\n')
+        downloader = PDFDownloader()
+        downloader.run(self.file_path)
