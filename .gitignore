@@ -1,4 +1,5 @@
 /assets/output/*
+/assets/sites_to_crawl/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

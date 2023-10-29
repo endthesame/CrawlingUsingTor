@@ -7,7 +7,7 @@ CATEGORY = "uspkhim"
 
 class PDFDownloader:
 
-    MAX_RETRIES = 2  # Максимальное количество попыток скачивания
+    MAX_RETRIES = 3  # Максимальное количество попыток скачивания
     ERROR_PATTERNS = {'waitforfullt'}  # Множество с ошибками или паттернами для проверки
 
     def __init__(self):
@@ -22,6 +22,16 @@ class PDFDownloader:
         if response.status_code != 200 and not (300 <= response.status_code < 400):
             return True
         return False
+    
+    def is_tor_available(self):
+    # Эта функция проверяет, доступен ли Tor
+        try:
+            response = self.session.get("https://httpbin.org/ip")
+            if response.status_code == 200:
+                return True
+            return False
+        except:
+            return False
 
     def download_pdf(self, pdf_link, filename):
         # Скачивание файла
@@ -32,8 +42,14 @@ class PDFDownloader:
 
         file_path = os.path.join(path_to_pdf_folder, filename)
 
-        for _ in range(self.MAX_RETRIES):
+        retries = 0
+        while retries < self.MAX_RETRIES:
+            while not self.is_tor_available():
+                print("Tor недоступен. Ожидание 2 минуты перед следующей проверкой...")
+                time.sleep(120)
+
             response = self.session.get(pdf_link)
+
             if not self.has_error(response):
                 with open(file_path, 'wb') as file:
                     file.write(response.content)
@@ -71,4 +87,4 @@ class PDFDownloader:
 if __name__ == "__main__":
     downloader = PDFDownloader()
     # Тут нужен путь к вашему файлу с ссылками.
-    downloader.run("path_to_your_links_file.txt")
+    downloader.run("../../../assets/sites_to_crawl/sites.txt")
