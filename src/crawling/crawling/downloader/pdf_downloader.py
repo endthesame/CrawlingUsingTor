@@ -47,18 +47,21 @@ class PDFDownloader:
             while not self.is_tor_available():
                 print("Tor недоступен. Ожидание 2 минуты перед следующей проверкой...")
                 time.sleep(120)
+            try:
+                response = self.session.get(pdf_link)
 
-            response = self.session.get(pdf_link)
-
-            if not self.has_error(response):
-                with open(file_path, 'wb') as file:
-                    file.write(response.content)
-                print(f"Successfully downloaded {pdf_link} to {file_path}")  # Сообщение об успешном скачивании
-                return  # Успешное скачивание, выход из функции
-            else:
-                print("Error to downloading: ", pdf_link, "\n Changing IP")
+                if not self.has_error(response):
+                    with open(file_path, 'wb') as file:
+                        file.write(response.content)
+                    print(f"Successfully downloaded {pdf_link} to {file_path}")  # Сообщение об успешном скачивании
+                    return  # Успешное скачивание, выход из функции
+                else:
+                    print("Error to downloading: ", pdf_link, "\n Changing IP")
+                    self.change_ip_and_wait()  # Смена IP и пауза перед следующей попыткой
+            except requests.exceptions.ProxyError:
+                print(f"Proxy error while downloading {pdf_link}. Retrying with new IP...")
                 self.change_ip_and_wait()  # Смена IP и пауза перед следующей попыткой
-
+                
         print(f"Failed to download {pdf_link} after {self.MAX_RETRIES} attempts.")  # Сообщение, если скачивание не удалось
 
     def change_ip(self):
