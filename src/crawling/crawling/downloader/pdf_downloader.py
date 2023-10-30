@@ -61,7 +61,7 @@ class PDFDownloader:
             except requests.exceptions.ProxyError:
                 print(f"Proxy error while downloading {pdf_link}. Retrying with new IP...")
                 self.change_ip_and_wait()  # Смена IP и пауза перед следующей попыткой
-                
+
         print(f"Failed to download {pdf_link} after {self.MAX_RETRIES} attempts.")  # Сообщение, если скачивание не удалось
 
     def change_ip(self):
@@ -90,4 +90,8 @@ class PDFDownloader:
 if __name__ == "__main__":
     downloader = PDFDownloader()
     # Тут нужен путь к вашему файлу с ссылками.
-    downloader.run("../../../assets/sites_to_crawl/sites.txt")
+    folder_path = f"../../../assets/output/{CATEGORY}/links"
+    file_name = os.listdir(folder_path)[0]
+    file_path = os.path.join(folder_path, file_name)
+    print(file_path)
+    downloader.run(file_path)
