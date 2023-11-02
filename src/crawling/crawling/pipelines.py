@@ -20,26 +20,28 @@ class CrawlingPipeline:
 class JsonFeedPipeline:
 
     def __init__(self):
-        self.buffer = []
+        pass
+        # self.buffer = []
 
     def open_spider(self, spider):
         pass
 
     def process_item(self, item, spider):
-        self.buffer.append(dict(item))
-        title_hash = hashlib.sha256(item['metafields']['title'].encode()).hexdigest()
-        date_hash = hashlib.sha256(item['metafields']['date'].encode()).hexdigest()
-        file_name = f"{spider.category}_{title_hash}_{date_hash}.json"
-        folder_path = f"../../../assets/output/{spider.category}/jsons/"
-        full_path = os.path.join(folder_path, file_name)
+        title = item['metafields']['title']
+        #проверяем что в мете есть title, потому что если title нет, то нам такой док и не нужен
+        if title: 
+            title_hash = hashlib.sha256(item['metafields']['title'].encode()).hexdigest()
+            date_hash = hashlib.sha256(item['metafields']['date'].encode()).hexdigest()
+            file_name = f"{spider.category}_{title_hash}_{date_hash}.json"
+            folder_path = f"../../../assets/output/{spider.category}/jsons/"
+            full_path = os.path.join(folder_path, file_name)
 
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
 
-        # Теперь записываем каждый элемент в свой собственный файл, а не ждем, пока буфер будет заполнен
-        with open(full_path, 'w', encoding='utf-8') as f:
-            json.dump(item['metafields'], f, indent=4, ensure_ascii=False)
-        self.buffer = []
+            # Теперь записываем каждый элемент в свой собственный файл, а не ждем, пока буфер будет заполнен
+            with open(full_path, 'w', encoding='utf-8') as f:
+                json.dump(item['metafields'], f, indent=4, ensure_ascii=False)
 
         return item
 

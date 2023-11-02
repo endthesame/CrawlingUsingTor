@@ -143,6 +143,11 @@ class ProxyMiddleware(HttpProxyMiddleware):
             # self.renew_ip_if_needed(spider=spider)
             # request.headers['User-Agent'] = UserAgent().random
 
+            #ДЛЯ EDP ЕСЛИ КОНТЕНТ НЕ НАЙДЕН ТО ПРОПУСК И НЕ ПЫТАТЬСЯ МЕНЯТЬ IP  И ТД
+            if response.css('.breadcrumbs span::text').get() == 'Content not found' or response.css('.breadcrumbs span::text').get() == 'Contenu non trouvé ':
+                spider.logger.warning("Content not found. Skipping URL: {request.url}")
+                raise IgnoreRequest("Content not found")
+
             # Узнаем, сколько раз этот запрос уже был повторен
             retries = request.meta.get('retry_times', 0) + 1
             

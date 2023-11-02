@@ -8,6 +8,7 @@ from crawling.downloader.pdf_downloader import PDFDownloader
 
 class MetaSpider(scrapy.Spider):
     name = 'meta'
+    marks_css_to_download_pdf = ['.special_article']
     link_buffer = []
 
     #added category where we save meta data
@@ -35,7 +36,7 @@ class MetaSpider(scrapy.Spider):
     def parse(self, response):
         item = CrawlingItem()
 
-        meta_data = uspkhim.extract_meta_data(response) #ТУТ МЕНЯЕТСЯ ЗАДАНИЕ МЕТА ДЛЯ САЙТОВ
+        meta_data = edp.extract_meta_data(response) #ТУТ МЕНЯЕТСЯ ЗАДАНИЕ МЕТА ДЛЯ САЙТОВ
         #хеширует тайтл для названия файла
         title_hash = hashlib.sha256(meta_data['title'].encode()).hexdigest()
         date_hash = hashlib.sha256(meta_data['date'].encode()).hexdigest()
@@ -43,19 +44,27 @@ class MetaSpider(scrapy.Spider):
         yield item
 
         # Поиск ссылки на PDF
-        pdf_link = uspkhim.extract_pdf_link(response)
+        pdf_link = edp.extract_pdf_link(response)
         
         # Если ссылка на PDF найдена - добавляем ее в буфер
         if pdf_link:
-            absolute_pdf_link = response.urljoin(pdf_link)
-            pdf_filename = f"{self.category}_{title_hash}_{date_hash}.pdf"
-            self.link_buffer.append((absolute_pdf_link, pdf_filename))
+            add_pdf_link = False
+            #проверка на соответствие классам css (в данном случае смотрим что док free или openaccess)
+            for css_selector in self.marks_css_to_download_pdf:
+                if response.css(css_selector):
+                    add_pdf_link = True
+                    break
+            #проверяем что пред условие удоволетворено и тайтл найден
+            if add_pdf_link and meta_data['title'] is not None:
+                absolute_pdf_link = response.urljoin(pdf_link)
+                pdf_filename = f"{self.category}_{title_hash}_{date_hash}.pdf"
+                self.link_buffer.append((absolute_pdf_link, pdf_filename))
 
-            if len(self.link_buffer) >= 10:
-                with open(self.file_path, 'a') as f:  # Используем режим 'a' для добавления ссылок, чтобы не перезаписать файл
-                    for link, pdf_filename in self.link_buffer:
-                        f.write(link + ' ' + pdf_filename + '\n')
-                self.link_buffer = []
+                if len(self.link_buffer) >= 10:
+                    with open(self.file_path, 'a') as f:  # Используем режим 'a' для добавления ссылок, чтобы не перезаписать файл
+                        for link, pdf_filename in self.link_buffer:
+                            f.write(link + ' ' + pdf_filename + '\n')
+                    self.link_buffer = []
 
     def closed(self, reason):
         # Записываем оставшиеся ссылки из буфера в файл, если они есть
