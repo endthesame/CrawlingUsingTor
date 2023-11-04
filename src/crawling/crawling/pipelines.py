@@ -31,7 +31,7 @@ class JsonFeedPipeline:
         #проверяем что в мете есть title, потому что если title нет, то нам такой док и не нужен
         if title: 
             title_hash = hashlib.sha256(item['metafields']['202'].encode()).hexdigest()
-            date_hash = hashlib.sha256(item['metafields']['date'].encode()).hexdigest()
+            date_hash = hashlib.sha256(item['metafields']['203'].encode()).hexdigest()
             file_name = f"{spider.category}_{title_hash}_{date_hash}.json"
             folder_path = f"../../../assets/output/{spider.category}/jsons/"
             full_path = os.path.join(folder_path, file_name)

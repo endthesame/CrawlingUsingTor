@@ -39,7 +39,7 @@ class MetaSpider(scrapy.Spider):
         meta_data = edp.extract_meta_data(response) #ТУТ МЕНЯЕТСЯ ЗАДАНИЕ МЕТА ДЛЯ САЙТОВ
         #хеширует тайтл для названия файла
         title_hash = hashlib.sha256(meta_data['202'].encode()).hexdigest()
-        date_hash = hashlib.sha256(meta_data['date'].encode()).hexdigest()
+        date_hash = hashlib.sha256(meta_data['203'].encode()).hexdigest()
         item['metafields'] = meta_data
         yield item
 
