@@ -27,10 +27,10 @@ class JsonFeedPipeline:
         pass
 
     def process_item(self, item, spider):
-        title = item['metafields']['title']
+        title = item['metafields']['202']
         #проверяем что в мете есть title, потому что если title нет, то нам такой док и не нужен
         if title: 
-            title_hash = hashlib.sha256(item['metafields']['title'].encode()).hexdigest()
+            title_hash = hashlib.sha256(item['metafields']['202'].encode()).hexdigest()
             date_hash = hashlib.sha256(item['metafields']['date'].encode()).hexdigest()
             file_name = f"{spider.category}_{title_hash}_{date_hash}.json"
             folder_path = f"../../../assets/output/{spider.category}/jsons/"

@@ -38,7 +38,7 @@ class MetaSpider(scrapy.Spider):
 
         meta_data = edp.extract_meta_data(response) #ТУТ МЕНЯЕТСЯ ЗАДАНИЕ МЕТА ДЛЯ САЙТОВ
         #хеширует тайтл для названия файла
-        title_hash = hashlib.sha256(meta_data['title'].encode()).hexdigest()
+        title_hash = hashlib.sha256(meta_data['202'].encode()).hexdigest()
         date_hash = hashlib.sha256(meta_data['date'].encode()).hexdigest()
         item['metafields'] = meta_data
         yield item
@@ -55,7 +55,7 @@ class MetaSpider(scrapy.Spider):
                     add_pdf_link = True
                     break
             #проверяем что пред условие удоволетворено и тайтл найден
-            if add_pdf_link and meta_data['title'] is not None:
+            if add_pdf_link and meta_data['202'] is not None:
                 absolute_pdf_link = response.urljoin(pdf_link)
                 pdf_filename = f"{self.category}_{title_hash}_{date_hash}.pdf"
                 self.link_buffer.append((absolute_pdf_link, pdf_filename))
