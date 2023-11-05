@@ -58,6 +58,7 @@ class PDFDownloader:
                 else:
                     print("Error to downloading: ", pdf_link, "\n Changing IP")
                     self.change_ip_and_wait()  # Смена IP и пауза перед следующей попыткой
+                    retries +=1
             except requests.exceptions.ProxyError:
                 print(f"Proxy error while downloading {pdf_link}. Retrying with new IP...")
                 self.change_ip_and_wait()  # Смена IP и пауза перед следующей попыткой
