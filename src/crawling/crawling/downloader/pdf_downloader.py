@@ -3,7 +3,7 @@ from stem import Signal
 from stem.control import Controller
 import os
 
-CATEGORY = "edp"
+CATEGORY = "worldsc"
 
 class PDFDownloader:
 
