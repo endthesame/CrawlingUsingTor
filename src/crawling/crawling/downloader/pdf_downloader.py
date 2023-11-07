@@ -8,7 +8,7 @@ CATEGORY = "spied"
 class PDFDownloader:
 
     MAX_RETRIES = 3  # Максимальное количество попыток скачивания
-    ERROR_PATTERNS = {'waitforfullt'}  # Множество с ошибками или паттернами для проверки
+    ERROR_PATTERNS = {'access-suspended'}  # Множество с ошибками или паттернами для проверки
 
     def __init__(self):
         # Настройка TOR через Privoxy

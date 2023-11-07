@@ -138,7 +138,7 @@ class ProxyMiddleware(HttpProxyMiddleware):
     def process_response(self, request, response, spider):
         # Get a new identity depending on the response
         spider.logger.info(f"Processing response with status: {response.status} and URL: {response.url}")
-        if not (response.status == 200 or (300 <= response.status < 400)) or 'waitforfullt' in response.url:
+        if not (response.status == 200 or (300 <= response.status < 400)) or 'access-suspended' in response.url:
 
             # self.renew_ip_if_needed(spider=spider)
             # request.headers['User-Agent'] = UserAgent().random
