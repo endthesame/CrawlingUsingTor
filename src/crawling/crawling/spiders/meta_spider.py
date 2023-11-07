@@ -3,12 +3,12 @@ import os, json, hashlib
 from datetime import datetime
 
 from crawling.items import CrawlingItem, PdfDownloadItem
-from crawling.spiders.site_extractors import world_sc
+from crawling.spiders.site_extractors import spied
 from crawling.downloader.pdf_downloader import PDFDownloader
 
 class MetaSpider(scrapy.Spider):
     name = 'meta'
-    marks_css_to_download_pdf = ['.open-access', '.free-access']
+    marks_css_to_download_pdf = ['[alt="Open Access"]']
     link_buffer = []
 
     #added category where we save meta data
@@ -36,7 +36,7 @@ class MetaSpider(scrapy.Spider):
     def parse(self, response):
         item = CrawlingItem()
 
-        meta_data = world_sc.extract_meta_data(response) #ТУТ МЕНЯЕТСЯ ЗАДАНИЕ МЕТА ДЛЯ САЙТОВ
+        meta_data = spied.extract_meta_data(response) #ТУТ МЕНЯЕТСЯ ЗАДАНИЕ МЕТА ДЛЯ САЙТОВ
         #хеширует тайтл для названия файла
         title_hash = hashlib.sha256(meta_data['202'].encode()).hexdigest()
         date_hash = hashlib.sha256(meta_data['203'].encode()).hexdigest()
@@ -44,7 +44,7 @@ class MetaSpider(scrapy.Spider):
         yield item
 
         # Поиск ссылки на PDF
-        pdf_link = world_sc.extract_pdf_link(response)
+        pdf_link = spied.extract_pdf_link(response)
         
         # Если ссылка на PDF найдена - добавляем ее в буфер
         if pdf_link:
