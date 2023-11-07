@@ -133,7 +133,7 @@ class ProxyMiddleware(HttpProxyMiddleware):
         elif self.is_ip_refreshing:
             spider.logger.warning(f"IP is currently being refreshed. Waiting...")
         else:
-            spider.logger.warning(f"Unable to change IP because 30 minute have not passed")
+            spider.logger.warning(f"Unable to change IP because 30 sec have not passed")
 
     def process_response(self, request, response, spider):
         # Get a new identity depending on the response
@@ -144,7 +144,7 @@ class ProxyMiddleware(HttpProxyMiddleware):
             # request.headers['User-Agent'] = UserAgent().random
 
             #ДЛЯ EDP ЕСЛИ КОНТЕНТ НЕ НАЙДЕН ТО ПРОПУСК И НЕ ПЫТАТЬСЯ МЕНЯТЬ IP  И ТД
-            if response.css('.breadcrumbs span::text').get() == 'Content not found' or response.css('.breadcrumbs span::text').get() == 'Contenu non trouvé ':
+            if response.xpath('//*[@class="intro"]/h1/text()').get() == 'Page Not Found':
                 spider.logger.warning("Content not found. Skipping URL: {request.url}")
                 raise IgnoreRequest("Content not found")
 
