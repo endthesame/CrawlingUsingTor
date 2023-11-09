@@ -114,7 +114,8 @@ class ProxyMiddleware(HttpProxyMiddleware):
     def __init__(self, *args, **kwargs):
         super(ProxyMiddleware, self).__init__(*args, **kwargs)
         self.last_ip_refresh = datetime.datetime.now()
-        self.is_ip_refreshing = False
+        self.request_count = 0
+        #self.is_ip_refreshing = False
         self.renew_tor_ip()
 
     def renew_tor_ip(self):
@@ -138,36 +139,45 @@ class ProxyMiddleware(HttpProxyMiddleware):
     def process_response(self, request, response, spider):
         # Get a new identity depending on the response
         spider.logger.info(f"Processing response with status: {response.status} and URL: {response.url}")
-        if not (response.status == 200 or (300 <= response.status < 400)) or 'access-suspended' in response.url:
+        if (response.status > 399) or ("access-suspended" in response.url):
+            spider.logger.info(f"Error in response: {response.status} and URL: {response.url}")
 
             # self.renew_ip_if_needed(spider=spider)
             # request.headers['User-Agent'] = UserAgent().random
 
             #ДЛЯ EDP ЕСЛИ КОНТЕНТ НЕ НАЙДЕН ТО ПРОПУСК И НЕ ПЫТАТЬСЯ МЕНЯТЬ IP  И ТД
-            if response.xpath('//*[@class="intro"]/h1/text()').get() == 'Page Not Found':
+            if response.xpath('//*[@class="intro"]/h1/text()').get() == "Page Not Found":
                 spider.logger.warning("Content not found. Skipping URL: {request.url}")
                 raise IgnoreRequest("Content not found")
 
-            # Узнаем, сколько раз этот запрос уже был повторен
-            retries = request.meta.get('retry_times', 0) + 1
-            
-            # Если попыток было меньше 2
-            if retries <= 2:
-                spider.logger.warning(f"Attempt #{retries}. Changing IP and retrying...")
-                
-                if not self.is_ip_refreshing:
-                    self.renew_ip_if_needed(spider=spider)
+            request.headers['User-Agent'] = UserAgent().random
+            self.renew_ip_if_needed(spider=spider)
 
-                request.headers['User-Agent'] = UserAgent().random
-                request.meta['retry_times'] = retries  # Обновляем счетчик попыток
-                return request.replace(dont_filter=True)  # Повторный запрос
-            else:
-                spider.logger.warning(f"Gave up after {retries} attempts. Skipping URL: {request.url}")
-                raise IgnoreRequest(f"Failed after {retries} retries")
+
+            # # Узнаем, сколько раз этот запрос уже был повторен
+            # retries = request.meta.get('retry_times', 0) + 1
+            
+            # # Если попыток было меньше 2
+            # if retries <= 2:
+            #     spider.logger.warning(f"Attempt #{retries}. Changing IP and retrying...")
+                
+            #     if not self.is_ip_refreshing:
+            #         self.renew_ip_if_needed(spider=spider)
+
+            #     request.headers['User-Agent'] = UserAgent().random
+            #     request.meta['retry_times'] = retries  # Обновляем счетчик попыток
+            #     return request.replace(dont_filter=True)  # Повторный запрос
+            # else:
+            #     spider.logger.warning(f"Gave up after {retries} attempts. Skipping URL: {request.url}")
+            #     raise IgnoreRequest(f"Failed after {retries} retries")
             
         return response
     
     def process_request(self, request, spider):
+        self.request_count += 1
         #renew_tor_ip() # uncomment this line if you want to change IP every time
         #request.headers['User-Agent'] = UserAgent().random
+        if self.request_count >= 50:
+            self.renew_tor_ip()
+            self.request_count = 0
         request.meta['proxy'] = 'http://127.0.0.1:8118'
